@@ -1,32 +1,83 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-    --primary-dark: #1a1a1a; --primary-medium: #2d2d2d;
-    --accent-warm: #d4a574; --accent-cool: #7a9cb5;
-    --text-light: #f5f5f5; --text-muted: #9a9a9a;
-    --danger: #c85a54; --success: #6b9080; --warning: #e8b44a;
+const state = {
+    character: null, money: 50, happiness: 50, familyTrust: 30, communityTrust: 0,
+    choices: [], oldFriendsFlag: false, metBreakthrough: false
+};
+const characters = {
+    lina: { name: "Lina", bio: "Recovering from addiction. Has a 3-year-old son.", money: 50, happy: 40, trust: 25 },
+    marcus: { name: "Marcus", bio: "Former secret society member seeking purpose.", money: 80, happy: 45, trust: 20 },
+    sara: { name: "Sara", bio: "First-time offender. Family is willing to help.", money: 100, happy: 55, trust: 40 }
+};
+function updateStats() {
+    document.getElementById('money-stat').textContent = `$${state.money}`;
+    document.getElementById('happiness-stat').textContent = `${state.happiness}%`;
+    document.getElementById('family-stat').textContent = `${state.familyTrust}%`;
+    document.getElementById('community-stat').textContent = `${state.communityTrust}%`;
 }
-body {
-    font-family: 'Work Sans', sans-serif;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    color: var(--text-light); min-height: 100vh;
-    display: flex; justify-content: center; align-items: center; padding: 20px;
+function showScene(html) {
+    document.getElementById('game-content').innerHTML = `<div class="scene">${html}</div>`;
 }
-.game-container { max-width: 950px; width: 100%; background: rgba(45, 45, 45, 0.95); border-radius: 16px; overflow: hidden; }
-.header { background: linear-gradient(135deg, var(--accent-warm) 0%, var(--accent-cool) 100%); padding: 40px; text-align: center; }
-h1 { font-family: 'Crimson Pro', serif; font-size: 2.8rem; color: var(--primary-dark); }
-.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; padding: 25px; background: rgba(26, 26, 26, 0.5); }
-.stat-value { font-size: 1.6rem; font-weight: 600; }
-.content { padding: 50px 40px; }
-.scene-title { font-family: 'Crimson Pro', serif; font-size: 2rem; color: var(--accent-warm); border-left: 4px solid var(--accent-warm); padding-left: 20px; margin-bottom: 30px; }
-.character-card { background: rgba(212, 165, 116, 0.1); padding: 20px; border-radius: 12px; margin: 15px 0; border: 2px solid var(--accent-warm); cursor: pointer; display: flex; gap: 20px; align-items: center; }
-.character-portrait { width: 80px; height: 80px; border-radius: 50%; }
-.portrait-lina { background: linear-gradient(#8B4789, #E8A5D0); }
-.portrait-marcus { background: linear-gradient(#2C5F7C, #7AB8D9); }
-.portrait-sara { background: linear-gradient(#D4A574, #F5E1CC); }
-.scene-illustration { width: 100%; height: 180px; border-radius: 10px; margin: 20px 0; }
-.illustration-prison { background: #4a5568; }
-.illustration-cafe { background: #8B7355; position: relative; }
-.illustration-cafe::after { content: '☕'; font-size: 3rem; position: absolute; top: 35%; left: 45%; }
-.choice-btn { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-warm); color: white; border-radius: 5px; cursor: pointer; text-align: left; }
-.choice-btn:hover { background: var(--accent-warm); color: black; }
-.continue-btn { padding: 12px 30px; background: var(--accent-warm); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+function intro() {
+    showScene(`
+        <h2 class="scene-title">Day 1: Changi Gates</h2>
+        <div class="scene-illustration illustration-prison"></div>
+        <p>The gates close behind you. You are free. But where will you go?</p>
+        <button class="continue-btn" onclick="chooseCharacter()">Start</button>
+    `);
+}
+function chooseCharacter() {
+    showScene(`
+        <h2 class="scene-title">Select Persona</h2>
+        <div class="character-card" onclick="select('lina')"><div class="character-portrait portrait-lina"></div><div><h3>Lina</h3><p>${characters.lina.bio}</p></div></div>
+        <div class="character-card" onclick="select('marcus')"><div class="character-portrait portrait-marcus"></div><div><h3>Marcus</h3><p>${characters.marcus.bio}</p></div></div>
+        <div class="character-card" onclick="select('sara')"><div class="character-portrait portrait-sara"></div><div><h3>Sara</h3><p>${characters.sara.bio}</p></div></div>
+    `);
+}
+function select(key) {
+    const c = characters[key];
+    state.character = key; state.money = c.money; state.happiness = c.happy; state.familyTrust = c.trust;
+    updateStats(); housing();
+}
+function housing() {
+    showScene(`
+        <h2 class="scene-title">Housing</h2>
+        <button class="choice-btn" onclick="act(1)">Stay with Family (Free but tense)</button>
+        <button class="choice-btn" onclick="act(2)">Halfway House ($15/night)</button>
+    `);
+}
+function act(choice) {
+    if(choice === 1) { state.familyTrust += 10; state.happiness -= 10; }
+    else { state.money -= 15; state.communityTrust += 10; }
+    updateStats(); breakthrough();
+}
+function breakthrough() {
+    showScene(`
+        <h2 class="scene-title">Breakthrough Café</h2>
+        <div class="scene-illustration illustration-cafe"></div>
+        <p>You see a cafe run by ex-offenders. Inside, everyone shares their life stories. You see the cage of your past starting to open.</p>
+        <button class="choice-btn" onclick="cafe(true)">Enter and join them</button>
+        <button class="choice-btn" onclick="cafe(false)">Keep walking</button>
+    `);
+}
+function cafe(joined) {
+    if(joined) { state.happiness += 25; state.communityTrust += 20; state.metBreakthrough = true; }
+    updateStats(); friends();
+}
+function friends() {
+    showScene(`
+        <h2 class="scene-title">Old Connections</h2>
+        <p>Your old friends call. "Eh, come KTV. We got a lobang for easy money."</p>
+        <button class="choice-btn" onclick="end(true)">Block and ignore them</button>
+        <button class="choice-btn" onclick="end(false)">Meet them for one drink</button>
+    `);
+}
+function end(blocked) {
+    if(blocked) { state.happiness += 15; state.communityTrust += 10; }
+    else { state.oldFriendsFlag = true; state.happiness -= 30; }
+    updateStats();
+    if(state.metBreakthrough && blocked) {
+        showScene(`<h2 class="scene-title">Happy Route: Thriving</h2><p>By joining Breakthrough and cutting off bad friends, you found a new family. You are truly free.</p><button class="continue-btn" onclick="location.reload()">Restart</button>`);
+    } else {
+        showScene(`<h2 class="scene-title">The Cycle Continues</h2><p>Without support and with bad influences, the road back to the cage is short.</p><button class="continue-btn" onclick="location.reload()">Restart</button>`);
+    }
+}
+intro();
